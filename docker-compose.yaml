@@ -1,0 +1,62 @@
+version: '3'
+networks: 
+  shop:
+services: 
+  nginx-laravel:
+    image: nginx:stable-alpine
+    container_name: ak49-nginx-laravel
+    ports:
+      - "8082:80"
+    volumes:
+      - ./Backend/shop:/var/www/shop
+      - ./Backend/nginx/default.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - php
+      - postgresql
+    networks:
+      - shop
+  php:
+    image: php:7.4.9-fpm
+    # build:
+    #   context: .
+    #   dockerfile: Dockerfile
+    container_name: ak49-php
+    volumes:
+      - ./Backend/shop:/var/www/shop
+    #   # - ./php/php.ini:/usr/local/etc/php/php.ini
+    ports:
+      - "9000:9000"
+    networks:
+      - shop
+  postgresql:
+    image: mdillon/postgis:10
+    container_name: ak49-postgresql
+    tty: true
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_PASSWORD=1234
+    volumes:
+      - ./Backend/postgresql:/var/lib/postgresql/data
+    networks: 
+      - shop
+  redis:
+    image: redis:5.0.5
+    container_name: ak49-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./Backend/redis.conf:/usr/local/etc/redis/redis.conf
+    networks:
+      - shop
+  vue:
+    build:
+      context: .
+      dockerfile: ./Frontend/shop/Dockerfile
+    container_name: ak49-vue
+    ports:
+        - "8081:80"
+    networks:
+        - shop
+  
